@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Sara RRHH">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Sara — Asistente RRHH</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0c0e14; --surface:#13161f; --surface2:#1a1e2b; --border:#252a3a;
+  --accent:#4fffb0; --accent2:#7c6fff; --user-bg:#1e2540; --bot-bg:#161b28;
+  --text:#e8eaf2; --muted:#6b7190; --danger:#ff5e7a; --radius:18px;
+  --font-ui:'Syne',sans-serif; --font-body:'DM Sans',sans-serif;
+}
+html { height: 100%; height: -webkit-fill-available; }
+body {
+  height: 100%; height: -webkit-fill-available;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  overflow: hidden; position: fixed; width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before {
+  content:''; position:fixed; inset:0; z-index:0;
+  background-image: linear-gradient(rgba(79,255,176,.025) 1px,transparent 1px), linear-gradient(90deg,rgba(79,255,176,.025) 1px,transparent 1px);
+  background-size:40px 40px; pointer-events:none;
+}
+body::after {
+  content:''; position:fixed; top:-20%; left:50%; transform:translateX(-50%);
+  width:700px; height:500px;
+  background:radial-gradient(ellipse,rgba(124,111,255,.10) 0%,transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.shell {
+  display: grid; grid-template-rows: auto 1fr auto;
+  height: 100dvh; height: -webkit-fill-available;
+  max-width: 820px; margin: 0 auto; position: relative; z-index: 1;
+}
+header {
+  position:relative; z-index:10;
+  display:flex; align-items:center; gap:14px;
+  padding:18px 24px; padding-top: calc(18px + env(safe-area-inset-top));
+  border-bottom:1px solid var(--border);
+  background:rgba(13,15,21,.85); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+}
+.avatar {
+  width:42px; height:42px; border-radius:12px;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:grid; place-items:center; font-size:20px; flex-shrink:0;
+  box-shadow:0 0 0 1px rgba(79,255,176,.3),0 4px 24px rgba(124,111,255,.25);
+}
+.header-info { flex:1; }
+.header-info h1 { font-family:var(--font-ui); font-size:15px; font-weight:700; letter-spacing:.03em; }
+.status { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); margin-top:2px; }
+.status-dot { width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 6px var(--accent); animation:pulse-dot 2s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+.header-actions { display:flex; gap:8px; }
+.btn-icon {
+  width:34px; height:34px; border-radius:9px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--muted); cursor:pointer;
+  display:grid; place-items:center; transition:all .2s;
+  touch-action:manipulation;
+}
+.btn-icon:hover { color:var(--text); border-color:var(--accent); background:rgba(79,255,176,.06); }
+.btn-icon svg { width:16px; height:16px; }
+.messages {
+  position:relative; z-index:5; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:24px 20px; display:flex; flex-direction:column; gap:14px; scroll-behavior:smooth;
+}
+.messages::-webkit-scrollbar { width:4px; }
+.messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+.welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; flex:1; text-align:center; padding:40px 20px; }
+.welcome-icon { width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg,var(--accent2),var(--accent)); display:grid; place-items:center; font-size:28px; box-shadow:0 0 0 1px rgba(79,255,176,.2),0 12px 40px rgba(124,111,255,.25); }
+.welcome h2 { font-family:var(--font-ui); font-size:22px; font-weight:700; }
+.welcome p { color:var(--muted); font-size:14px; max-width:320px; line-height:1.6; }
+.suggestions { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:4px; }
+.sug-btn {
+  padding:9px 16px; border-radius:22px; font-size:13px; cursor:pointer;
+  background:var(--surface2); border:1px solid var(--border); color:var(--muted);
+  font-family:var(--font-body); transition:all .2s; touch-action:manipulation;
+  -webkit-appearance:none;
+}
+.sug-btn:hover,.sug-btn:active { border-color:var(--ac); color:var(--text); background:rgba(79,255,176,.05); }
+.msg-row { display:flex; gap:10px; align-items:flex-end; animation:msg-in .3s cubic-bezier(.25,.8,.25,1) both; }
+@keyframes msg-in { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.msg-row.user { flex-direction:row-reverse; }
+.msg-avatar { width:30px; height:30px; border-radius:9px; flex-shrink:0; display:grid; place-items:center; font-size:14px; }
+.msg-avatar.bot { background:linear-gradient(135deg,var(--accent2),var(--accent)); }
+.msg-avatar.user { background:var(--user-bg); border:1px solid var(--border); }
+.bubble { max-width:72%; padding:11px 16px; border-radius:var(--radius); font-size:14.5px; line-height:1.65; }
+.msg-row.bot .bubble { background:var(--bot-bg); border:1px solid var(--border); border-bottom-left-radius:5px; }
+.msg-row.user .bubble { background:var(--user-bg); border:1px solid rgba(124,111,255,.35); border-bottom-right-radius:5px; }
+.bubble-meta { font-size:10.5px; color:var(--muted); margin-top:5px; }
+.msg-row.user .bubble-meta { text-align:right; }
+.typing-bubble { background:var(--bot-bg); border:1px solid var(--border); border-bottom-left-radius:5px; padding:14px 18px; display:flex; align-items:center; gap:5px; }
+.typing-bubble span { width:7px; height:7px; border-radius:50%; background:var(--muted); display:block; animation:typing-bounce .9s ease-in-out infinite; }
+.typing-bubble span:nth-child(2){animation-delay:.15s} .typing-bubble span:nth-child(3){animation-delay:.30s}
+@keyframes typing-bounce { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-6px);opacity:1} }
+.input-area {
+  position:relative; z-index:10;
+  padding:16px 20px; padding-bottom:calc(20px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--border);
+  background:rgba(13,15,21,.9); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+}
+.input-wrap {
+  display:flex; align-items:center; gap:10px;
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:16px; padding:10px 10px 10px 18px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.input-wrap:focus-within { border-color:rgba(79,255,176,.4); box-shadow:0 0 0 3px rgba(79,255,176,.06); }
+#chat-input {
+  flex:1; background:none; border:none; outline:none;
+  color:var(--text); font-family:var(--font-body);
+  font-size:16px; line-height:1.55;
+  -webkit-appearance:none; -webkit-user-select:text; user-select:text;
+}
+#chat-input::placeholder { color:var(--muted); }
+.send-btn {
+  width:38px; height:38px; border-radius:11px; border:none; cursor:pointer; flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  display:grid; place-items:center;
+  transition:transform .15s,opacity .15s,box-shadow .2s;
+  touch-action:manipulation; -webkit-appearance:none;
+  opacity:0.35;
+}
+.send-btn.active { opacity:1; }
+.send-btn.active:active { transform:scale(.93); }
+.send-btn svg { width:17px; height:17px; fill:#0c0e14; pointer-events:none; }
+.input-hint { font-size:11px; color:var(--muted); text-align:center; margin-top:8px; }
+.toast {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+  padding:10px 18px; font-size:13px; opacity:0; transition:all .3s; pointer-events:none; z-index:100;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.error { border-color:var(--danger); color:var(--danger); }
+@media(max-width:600px) {
+  .bubble{max-width:88%} header{padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top))} .messages{padding:16px 12px} .input-area{padding:12px 12px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="avatar">👔</div>
+    <div class="header-info">
+      <h1>Asistente TechCorp S.A.S.</h1>
+      <div class="status"><span class="status-dot"></span><span id="status-text">En línea · Listo para ayudarte</span></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="clear-btn" title="Limpiar conversación">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">💁🏻</div>
+      <h2>Hola, soy Sara</h2>
+      <p>Tu asistente virtual de Recursos Humanos. ¿En qué puedo ayudarte hoy? 💪</p>
+      <div class="suggestions">
+        <button class="sug-btn">¿Qué puedes hacer?</button>
+        <button class="sug-btn">Solicitar un certificado</button>
+        <button class="sug-btn">¿Hay vacantes disponibles?</button>
+      </div>
+    </div>
+  </div>
+  <div class="input-area">
+    <div class="input-wrap">
+      <input type="text" id="chat-input" placeholder="Escribe tu mensaje…" autocomplete="off" autocorrect="off" spellcheck="true"/>
+      <button type="button" class="send-btn" id="send-btn">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <p class="input-hint">Toca enviar o presiona Enter</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var WEBHOOK = 'https://yotrif.app.n8n.cloud/webhook/cc7ba324-b263-42fa-ab09-b10e412d96d6';
+var sessionId = 'session_' + Math.random().toString(36).slice(2);
+var messagesEl = document.getElementById('messages');
+var inputEl    = document.getElementById('chat-input');
+var sendBtn    = document.getElementById('send-btn');
+var clearBtn   = document.getElementById('clear-btn');
+var statusEl   = document.getElementById('status-text');
+var welcomeEl  = document.getElementById('welcome');
+var toastEl    = document.getElementById('toast');
+var isThinking = false;
+
+// Polling — activa el botón en TODOS los dispositivos
+setInterval(function() {
+  var ok = inputEl.value.trim().length > 0 && !isThinking;
+  if (ok) sendBtn.classList.add('active');
+  else sendBtn.classList.remove('active');
+}, 100);
+
+// Enter key
+inputEl.addEventListener('keydown', function(e) {
+  if (e.keyCode === 13) { e.preventDefault(); doSend(); }
+});
+
+// Botón enviar
+sendBtn.addEventListener('click', function(e) { e.preventDefault(); doSend(); });
+sendBtn.addEventListener('touchend', function(e) { e.preventDefault(); doSend(); }, {passive:false});
+
+// Sugerencias
+document.querySelectorAll('.sug-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() { inputEl.value = btn.textContent.trim(); setTimeout(doSend, 50); });
+  btn.addEventListener('touchend', function(e) { e.preventDefault(); inputEl.value = btn.textContent.trim(); setTimeout(doSend, 50); }, {passive:false});
+});
+
+// Limpiar
+clearBtn.addEventListener('click', function() {
+  messagesEl.innerHTML = ''; messagesEl.appendChild(welcomeEl);
+  welcomeEl.style.display = ''; showToast('Conversación limpiada');
+});
+
+// iOS keyboard fix
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    document.querySelector('.shell').style.height = window.visualViewport.height + 'px';
+    scrollToBottom();
+  });
+}
+
+function doSend() {
+  if (!isThinking && inputEl.value.trim()) sendMessage();
+}
+
+function sendMessage() {
+  var text = inputEl.value.trim();
+  if (!text || isThinking) return;
+  isThinking = true;
+  addMessage(text, 'user');
+  inputEl.value = '';
+  statusEl.textContent = 'Escribiendo…';
+  showTyping();
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', WEBHOOK, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 30000;
+  xhr.onload = function() {
+    hideTyping();
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var d = JSON.parse(xhr.responseText);
+        var reply = d.output || d.text || d.message || d.response ||
+          (Array.isArray(d) && d[0] && (d[0].output || d[0].text)) || 'Sin respuesta';
+        addMessage(reply, 'bot');
+        statusEl.textContent = 'En línea · Listo para ayudarte';
+      } catch(e) { addMessage('Error procesando respuesta.', 'bot'); }
+    } else {
+      addMessage('Error al conectar (' + xhr.status + '). Intenta de nuevo.', 'bot');
+      showToast('Error ' + xhr.status, true);
+    }
+    isThinking = false;
+  };
+  xhr.onerror = xhr.ontimeout = function() {
+    hideTyping();
+    addMessage('Error de conexión. Por favor intenta de nuevo.', 'bot');
+    showToast('Sin conexión', true);
+    statusEl.textContent = 'Error de conexión';
+    setTimeout(function() { statusEl.textContent = 'En línea · Listo para ayudarte'; }, 4000);
+    isThinking = false;
+  };
+  xhr.send(JSON.stringify({ message: text, sessionId: sessionId }));
+}
+
+function addMessage(content, role) {
+  welcomeEl.style.display = 'none';
+  var row = document.createElement('div');
+  row.className = 'msg-row ' + role;
+  var t = new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'});
+  row.innerHTML = '<div class="msg-avatar ' + role + '">' + (role==='bot'?'👔':'👤') + '</div>' +
+    '<div><div class="bubble">' + esc(content).replace(/\n/g,'<br/>') + '</div>' +
+    '<div class="bubble-meta">' + t + '</div></div>';
+  messagesEl.appendChild(row);
+  scrollToBottom();
+}
+
+function showTyping() {
+  var el = document.createElement('div');
+  el.className = 'msg-row bot'; el.id = 'typing-row';
+  el.innerHTML = '<div class="msg-avatar bot">👔</div><div class="bubble typing-bubble"><span></span><span></span><span></span></div>';
+  messagesEl.appendChild(el); scrollToBottom();
+}
+function hideTyping() { var el = document.getElementById('typing-row'); if(el) el.remove(); }
+function scrollToBottom() { setTimeout(function(){ messagesEl.scrollTop = messagesEl.scrollHeight; }, 60); }
+function showToast(msg, err) {
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show' + (err ? ' error' : '');
+  setTimeout(function(){ toastEl.className = 'toast'; }, 3000);
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
